@@ -1,0 +1,17 @@
+{
+  "dependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "name": "metatrader",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start" : "MetaEnv\\scripts\\activate && pip list && npx nodemon main.py",
+    "runTMP" : "npx nodemon -x \"cls;python\" main.py"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}
