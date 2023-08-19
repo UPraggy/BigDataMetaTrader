@@ -11,3 +11,9 @@ O preço de "bid" é o preço pelo qual um trader está disposto a comprar um de
 ## Bid High (Máxima do Bid)
 
 O "Bid High" refere-se ao preço mais alto atingido pela oferta de compra durante um determinado período de tempo. 
+
+
+
+# REFERENCES
+
+[Python e MetaTrader5 - MQL5 - Playlist Baseada](https://www.youtube.com/playlist?list=PLNJN8eyDzxuMmVeyllbZYC1SJBkRHXq0c)
