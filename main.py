@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import MetaTrader5 as mt5
+from datetime import datetime
 
 from googleFinance import getEBIT_ROIC 
 from getAtivosDF import geraDFAtivos
@@ -30,19 +31,39 @@ for x in range(len(listaAtivos)):
 
 #['time', 'bid', 'ask', 'last', 'volume', 'time_msc', 'flags', 'volume_real', 'ativo', 'EBIT', 'ROIC', 'ranking_ev_ebit']
 dataSet = pd.concat(dataSet)
-print(dataSet[dataSet['ativo'] == 'PETR4'])
+
 
 dataSet['ranking_ev_ebit'] = dataSet.groupby('ativo')['EBIT'].rank(ascending = False)
 dataSet['ranking_roic'] = dataSet.groupby('ativo')['ROIC'].rank(ascending = False)
+
 dataSet['ranking_final'] = dataSet['ranking_ev_ebit'] + dataSet['ranking_roic']
 dataSet['ranking_final'] = dataSet.groupby('ativo')['ranking_final'].rank()
 
-
+del dataSet['ranking_ev_ebit']
+del dataSet['ranking_roic']
 
 
 #IBOVESPA
 dataIbov = geraDFAtivos('IBOV')
-print(dataIbov['last'])
 
+# Adicionar while time.sleep(2) -> com adição de sempre adicionar mais um tick
+for x in range(len(listaAtivos)):
+	ativoTEMP = listaAtivos[x]
+	dataFrameTMP = geraDFAtivos(ativoTEMP, 1)
+	dataFrameTMP['EBIT'] = EBIT_ROICList[ativoTEMP]['EBIT']
+	dataFrameTMP['ROIC'] = EBIT_ROICList[ativoTEMP]['ROIC']
+	dataSet = pd.concat([dataSet,dataFrameTMP]).drop_duplicates()
+
+
+dataSet['ranking_ev_ebit'] = dataSet.groupby('ativo')['EBIT'].rank(ascending = False)
+dataSet['ranking_roic'] = dataSet.groupby('ativo')['ROIC'].rank(ascending = False)
+
+dataSet['ranking_final'] = dataSet['ranking_ev_ebit'] + dataSet['ranking_roic']
+dataSet['ranking_final'] = dataSet.groupby('ativo')['ranking_final'].rank()
+
+del dataSet['ranking_ev_ebit']
+del dataSet['ranking_roic']
+
+print(dataSet[['ativo', 'ranking_final','bid']])
 
 

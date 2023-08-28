@@ -28,5 +28,5 @@ def getEBIT_ROIC(ativos):
 
 		else:
 		    print("Erro ao fazer a requisição")
-		    objetoFinal[ativo["ativo"]] = {'EBIT': none, 'ROIC': none} 
+		    objetoFinal[ativo["ativo"]] = {'EBIT': None, 'ROIC': None} 
 	return objetoFinal
