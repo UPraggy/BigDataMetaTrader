@@ -1,10 +1,12 @@
 import os
+import numpy as np
 import pandas as pd
 import MetaTrader5 as mt5
 from datetime import datetime
-
-from googleFinance import getEBIT_ROIC 
+import matplotlib.pyplot as plt
+# from googleFinance import getEBIT_ROIC 
 from getAtivosDF import geraDFAtivos
+from configuraCompra import configuraBaseCompra
 
 os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -14,56 +16,51 @@ dataSet = []
 
 listaAtivos = ['PETR4','ABEV3','AAPL34','M1TA34']
 
-EBIT_ROICList = getEBIT_ROIC([
-	{'ativo' : 'PETR4', 'linkAtivoGoogle' : 'PETR4:BVMF'},
-	{'ativo' : 'ABEV3', 'linkAtivoGoogle' : 'ABEV3:BVMF'},
-	{'ativo' : 'AAPL34', 'linkAtivoGoogle' : 'AAPL34:BVMF'},
-	{'ativo' : 'M1TA34', 'linkAtivoGoogle' : 'M1TA34:BVMF'}
-	])
 
 
 for x in range(len(listaAtivos)):
 	ativoTEMP = listaAtivos[x]
 	dataFrameTMP = geraDFAtivos(ativoTEMP)
-	dataFrameTMP['EBIT'] = EBIT_ROICList[ativoTEMP]['EBIT']
-	dataFrameTMP['ROIC'] = EBIT_ROICList[ativoTEMP]['ROIC']
 	dataSet.append(dataFrameTMP)
 
 #['time', 'bid', 'ask', 'last', 'volume', 'time_msc', 'flags', 'volume_real', 'ativo', 'EBIT', 'ROIC', 'ranking_ev_ebit']
 dataSet = pd.concat(dataSet)
 
 
-dataSet['ranking_ev_ebit'] = dataSet.groupby('ativo')['EBIT'].rank(ascending = False)
-dataSet['ranking_roic'] = dataSet.groupby('ativo')['ROIC'].rank(ascending = False)
-
-dataSet['ranking_final'] = dataSet['ranking_ev_ebit'] + dataSet['ranking_roic']
-dataSet['ranking_final'] = dataSet.groupby('ativo')['ranking_final'].rank()
-
-del dataSet['ranking_ev_ebit']
-del dataSet['ranking_roic']
+dataSet = configuraBaseCompra(dataSet,'PETR4')
 
 
-#IBOVESPA
-dataIbov = geraDFAtivos('IBOV')
 
-# Adicionar while time.sleep(2) -> com adição de sempre adicionar mais um tick
-for x in range(len(listaAtivos)):
-	ativoTEMP = listaAtivos[x]
-	dataFrameTMP = geraDFAtivos(ativoTEMP, 1)
-	dataFrameTMP['EBIT'] = EBIT_ROICList[ativoTEMP]['EBIT']
-	dataFrameTMP['ROIC'] = EBIT_ROICList[ativoTEMP]['ROIC']
-	dataSet = pd.concat([dataSet,dataFrameTMP]).drop_duplicates()
+# GERANDO GRAFICO e "Comprando"
+data_compra = []
+data_venda = []
+
+for i in range(len(dataSet)):
+
+    if "sim" in dataSet['compra'].iloc[i]:
+
+        data_compra.append(dataSet.iloc[i+1].name) # +1 porque a gente compra no preço de abertura do dia seguinte.
+
+        for j in range(1, 11):
+
+            if dataSet['RSI'].iloc[i + j] > 40: #vendo se nos proximos 10 dias o RSI passa de 40
+
+                data_venda.append(dataSet.iloc[i + j + 1].name) #vende no dia seguinte q bater 40
+                break
+
+            elif j == 10:
+                data_venda.append(dataSet.iloc[i + j + 1].name)
+
+lucros = dataSet.loc[data_venda]['bid'].values/dataSet.loc[data_compra]['bid'].values - 1
+performance_acumulada = (np.cumprod((1 + lucros)) - 1)
+
+fig, ax = plt.subplots(figsize=(12, 5))
+
+#ax.plot(data_compra, performance_acumulada)
+
+ax.scatter(dataSet.loc[data_compra].index, dataSet.loc[data_compra]['last'], marker = '^',
+            c = 'g')
+ax.plot(dataSet['last'], alpha = 0.7)
 
 
-dataSet['ranking_ev_ebit'] = dataSet.groupby('ativo')['EBIT'].rank(ascending = False)
-dataSet['ranking_roic'] = dataSet.groupby('ativo')['ROIC'].rank(ascending = False)
-
-dataSet['ranking_final'] = dataSet['ranking_ev_ebit'] + dataSet['ranking_roic']
-dataSet['ranking_final'] = dataSet.groupby('ativo')['ranking_final'].rank()
-
-del dataSet['ranking_ev_ebit']
-del dataSet['ranking_roic']
-
-print(dataSet[['ativo', 'ranking_final','bid']])
-
-
+plt.show()

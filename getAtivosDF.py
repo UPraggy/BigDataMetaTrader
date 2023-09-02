@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import MetaTrader5 as mt5
 import pandas as pd
 
-def geraDFAtivos(ativoSelecionado, horasDif = 3):
+def geraDFAtivos(ativoSelecionado, horasDif = 10):
 
 	#tentar pegar a ultima data do ativo
 	dias = 0
