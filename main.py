@@ -54,13 +54,32 @@ for i in range(len(dataSet)):
 lucros = dataSet.loc[data_venda]['bid'].values/dataSet.loc[data_compra]['bid'].values - 1
 performance_acumulada = (np.cumprod((1 + lucros)) - 1)
 
+
+# import matplotlib.animation as anim
+
+
 fig, ax = plt.subplots(figsize=(12, 5))
 
-#ax.plot(data_compra, performance_acumulada)
+# ax.scatter(dataSet.loc[data_compra].index, dataSet.loc[data_compra]['last'], marker = '^',
+#             c = 'g')
+# ax.plot(dataSet['last'], alpha = 0.7)
 
-ax.scatter(dataSet.loc[data_compra].index, dataSet.loc[data_compra]['last'], marker = '^',
-            c = 'g')
-ax.plot(dataSet['last'], alpha = 0.7)
+def update(i):
+    ax.clear()
+    ax.scatter(dataSet.loc[data_compra].index, dataSet.loc[data_compra]['last'], marker = '^', c = 'g')
+    ax.plot(dataSet['last'], alpha = 0.7)
+    plt.pause(0.1)
+
+#plt.show()
+
+import time
+import random
+tempVal = 0
 
 
-plt.show()
+while True:
+	#dataSet['last'] = dataSet['last'].apply(lambda x: random.uniform(0.5, 1)+x)
+	update(tempVal)
+	time.sleep(5)
+	print("ATUALIZA")
+

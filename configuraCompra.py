@@ -6,7 +6,6 @@ def configuraBaseCompra(dadosAtivo,ativoSelecionado):
     #agrupa por tempo de forma a não ter dados "duplicados" pegando a média deles, ou seja, com mesma hora
     dadosAtivo = dadosAtivo.groupby('time').aggregate(lambda x : x.iloc[0] if x.dtype == 'object' else x.mean())
 
-    print(dadosAtivo)
     #remove casas decimais ou diminui elas, onde é necessário
     dadosAtivo[['bid','ask','last']] = dadosAtivo[['bid','ask','last']].apply(lambda x : round(x,2))
     dadosAtivo[['volume','flags','volume_real','time_msc']] =  dadosAtivo[['volume','flags','volume_real','time_msc']].astype('int64')
