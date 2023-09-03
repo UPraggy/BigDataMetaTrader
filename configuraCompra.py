@@ -1,9 +1,8 @@
-
 def configuraBaseCompra(dadosAtivo,ativoSelecionado): 
     #seleciona ativo
     dadosAtivo = dadosAtivo.loc[dadosAtivo['ativo'] == ativoSelecionado]
-
     #agrupa por tempo de forma a não ter dados "duplicados" pegando a média deles, ou seja, com mesma hora
+
     dadosAtivo = dadosAtivo.groupby('time').aggregate(lambda x : x.iloc[0] if x.dtype == 'object' else x.mean())
 
     #remove casas decimais ou diminui elas, onde é necessário
@@ -14,8 +13,9 @@ def configuraBaseCompra(dadosAtivo,ativoSelecionado):
     dadosAtivo['retornos'] = dadosAtivo['last'].pct_change()
 
     #Separa os retornos e já calcula a média
-    dadosAtivo['retornosPostivos'] = dadosAtivo['retornos'].apply(lambda x: x if x > 0 else 0).rolling(window = 22).mean() # se retorno maior que 0, é retorno positivo
-    dadosAtivo['retornosNegativos'] = dadosAtivo['retornos'].apply(lambda x: abs(x) if x < 0 else 0).rolling(window = 22).mean()
+    dadosAtivo['retornosPostivos'] = dadosAtivo['retornos'].apply(lambda x: x if x > 0 else 0).rolling(window = 22, min_periods=2).mean() # se retorno maior que 0, é retorno positivo
+
+    dadosAtivo['retornosNegativos'] = dadosAtivo['retornos'].apply(lambda x: abs(x) if x < 0 else 0).rolling(window = 22, min_periods=2).mean()
 
     #Calculando RSI -> se baseia no quanto ele tende a ficar positivo ou negativo
     dadosAtivo['RSI'] = (100 - 100/
