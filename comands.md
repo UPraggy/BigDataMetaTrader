@@ -73,7 +73,20 @@ else:
 ```
 
 
+# Compra com parametros necessários
+#### Para usar em um determinado tempo, deverá ser utilizada uma comparação
 
+```python
+result = mt5.order_send({
+    "action" : mt5.TRADE_ACTION_DEAL,
+    "symbol" : "PETR4" # ação desejada
+    "volume" : 0.0001 # 100 unidades da ação corrente
+    "price"  : mt5.symbol_info_tick(symbol).ask, # Preço (neste exemplo, é o preço atual)
+    "type"   : mt5.ORDER_TYPE_BUY, # Tipo de ordem (compra)
+    "comment": "Compra via python",
+    })
+
+```
 
 
 

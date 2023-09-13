@@ -1,32 +1,29 @@
-import os
+from sklearn.linear_model import LinearRegression
 import numpy as np
-import pandas as pd
-import MetaTrader5 as mt5
-from datetime import datetime
-import matplotlib.pyplot as plt
-
-
-from getAtivosDF import geraDFAtivos
-from configuraCompra import configuraBaseCompra
-
+import os
+import time
 os.system('cls' if os.name == 'nt' else 'clear')
 
-mt5.initialize(login=612347195,server='XPMT5-DEMO',password="PassTeste1()()") #inicializar
 
-dataSet = []
+# Seus dados
+data = np.array([1,3,7,11,13])
 
-listaAtivos = ['PETR4','ABEV3','AAPL34','M1TA34']
+# Reshape seus dados para o formato correto
+X = data[:-1].reshape(-1, 1)
+Y = data[1:]
+print(X)
+# Treine o modelo
+model = LinearRegression()
+model.fit(X, Y)
 
-dataSet = geraDFAtivos('PETR4', horasDif = 10, ticks=1000, 
-	limitPeriodo=True)
-futureDataSet = geraDFAtivos('PETR4', horasDif = 9, minutes = 32, ticks=1, 
-	limitPeriodo=True)
-
-#['time', 'bid', 'ask', 'last', 'volume', 'time_msc', 'flags', 'volume_real', 'ativo', 'EBIT', 'ROIC', 'ranking_ev_ebit']
-print(dataSet)
-print(futureDataSet)
-pd.concat([dataSet,futureDataSet], ignore_index=True)
+# Use o modelo para prever os próximos 5 valores
+X_future = [[1],[3],[7],[11]]
 
 
-dataSet = configuraBaseCompra(dataSet,'PETR4')
+Y_future = model.predict(X_future)
 
+for i in range(100):
+	X_future.append([int(Y_future[-1])])
+	Y_future = model.predict(X_future)
+
+print(X_future)
