@@ -1,66 +1,29 @@
-import os
+from sklearn.linear_model import LinearRegression
 import numpy as np
-import pandas as pd
-import MetaTrader5 as mt5
-from datetime import datetime
-import matplotlib.pyplot as plt
-# from googleFinance import getEBIT_ROIC 
-from getAtivosDF import geraDFAtivos
-from configuraCompra import configuraBaseCompra
-
+import os
+import time
 os.system('cls' if os.name == 'nt' else 'clear')
 
-mt5.initialize(login=612347195,server='XPMT5-DEMO',password="PassTeste1()()") #inicializar
 
-dataSet = []
+# Seus dados
+data = np.array([1,3,7,11,13])
 
-listaAtivos = ['PETR4','ABEV3','AAPL34','M1TA34']
+# Reshape seus dados para o formato correto
+X = data[:-1].reshape(-1, 1)
+Y = data[1:]
+print(X)
+# Treine o modelo
+model = LinearRegression()
+model.fit(X, Y)
 
-
-
-for x in range(len(listaAtivos)):
-	ativoTEMP = listaAtivos[x]
-	dataFrameTMP = geraDFAtivos(ativoTEMP)
-	dataSet.append(dataFrameTMP)
-
-#['time', 'bid', 'ask', 'last', 'volume', 'time_msc', 'flags', 'volume_real', 'ativo', 'EBIT', 'ROIC', 'ranking_ev_ebit']
-dataSet = pd.concat(dataSet)
-
-
-dataSet = configuraBaseCompra(dataSet,'PETR4')
+# Use o modelo para prever os próximos 5 valores
+X_future = [[1],[3],[7],[11]]
 
 
+Y_future = model.predict(X_future)
 
-# GERANDO GRAFICO e "Comprando"
-data_compra = []
-data_venda = []
+for i in range(100):
+	X_future.append([int(Y_future[-1])])
+	Y_future = model.predict(X_future)
 
-for i in range(len(dataSet)):
-
-    if "sim" in dataSet['compra'].iloc[i]:
-
-        data_compra.append(dataSet.iloc[i+1].name) # +1 porque a gente compra no preço de abertura do dia seguinte.
-
-        for j in range(1, 11):
-
-            if dataSet['RSI'].iloc[i + j] > 40: #vendo se nos proximos 10 dias o RSI passa de 40
-
-                data_venda.append(dataSet.iloc[i + j + 1].name) #vende no dia seguinte q bater 40
-                break
-
-            elif j == 10:
-                data_venda.append(dataSet.iloc[i + j + 1].name)
-
-lucros = dataSet.loc[data_venda]['bid'].values/dataSet.loc[data_compra]['bid'].values - 1
-performance_acumulada = (np.cumprod((1 + lucros)) - 1)
-
-fig, ax = plt.subplots(figsize=(12, 5))
-
-#ax.plot(data_compra, performance_acumulada)
-
-ax.scatter(dataSet.loc[data_compra].index, dataSet.loc[data_compra]['last'], marker = '^',
-            c = 'g')
-ax.plot(dataSet['last'], alpha = 0.7)
-
-
-plt.show()
+print(X_future)
