@@ -14,7 +14,7 @@ def geraDFAtivos(ativoSelecionado, horasDif = 10, seconds = 0, minutes=0,
 
 	while True:
 		#tentar pegar a ultima data do ativo
-		date = datetime.now() - timedelta(hours=horasDif, days=dias, minutes=minutes, seconds=seconds)
+		date = datetime.now() - timedelta(hours=horasDif, days=dias+int(horasDif/24), minutes=minutes, seconds=seconds)
 
 
 		flags = mt5.COPY_TICKS_ALL #Pegando todas as variações no preço 
