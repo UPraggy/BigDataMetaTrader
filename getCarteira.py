@@ -10,7 +10,7 @@ def getCarteira(mt5, listaAtivos = ''):
 	# Cria um array pegando todos os ativos do MetaTrader, filtra os que são do IBOVESPA(B3) e filtra os ativos compraveis que terminam com 3 ou 4
 
 	if (listaAtivos == ''):
-		listaAtivos = ['PETR4','ABEV3','AAPL34','M1TA34','TEND3','PLPL3','CEAB3','PINE4']
+		listaAtivos = ['PETR4','ABEV3','AAPL34','M1TA34','TEND3','PLPL3','PINE4']
 	else:
 		listaAtivos = [x.name for x in mt5.symbols_get() if "BOVESPA\\A VISTA" in x.path and x.name.endswith(('4')) and len(x.name) <= 6]
 
@@ -48,6 +48,11 @@ def getCarteira(mt5, listaAtivos = ''):
 	print("##### RANKING FINAL DE ATIVOS #####")
 	topAtivos = dataFrameTMP.sort_values(['ranking_final','ROIC','EBIT'])
 	print(topAtivos)
+
+
+	print("\n\n##### MELHOR ATIVO DO DIA #####\n")
+	print(topAtivos.iloc[0]['ativo'])
+	
 	return topAtivos.iloc[0]['ativo']
 
 

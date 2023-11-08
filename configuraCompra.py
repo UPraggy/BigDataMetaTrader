@@ -1,15 +1,36 @@
 import pandas as pd 
 
-def trataDF(dadosAtivo,ativoSelecionado):
-    #seleciona ativo
-    dadosAtivo = dadosAtivo.loc[dadosAtivo['ativo'] == ativoSelecionado]
-    #agrupa por tempo de forma a não ter dados "duplicados" pegando a média deles, ou seja, com mesma hora
+import pandas as pd
 
-    dadosAtivo = dadosAtivo.groupby('time').aggregate(lambda x : x.iloc[0] if x.dtype == 'object' else x.mean())
+def trataDF(dadosAtivo):
+    # Converte milissegundos para minutos e depois para datetime
+    #minutos .apply(lambda x : x/60000), unit='m')
+    #segundos .apply(lambda x : x/1000), unit='s')
+    dadosAtivo['time'] = pd.to_datetime(dadosAtivo['time_msc'].apply(lambda x : x/60000), unit='m')
 
-    #remove casas decimais ou diminui elas, onde é necessário
+
+    # Certifique-se de que 'time' é o índice
+    dadosAtivo.set_index('time', inplace=True)
+
+    dadosAtivo = dadosAtivo.loc[(dadosAtivo.index.weekday >= 0) & (dadosAtivo.index.weekday < 5)]
+    dadosAtivo = dadosAtivo.loc[(dadosAtivo.index.hour >= 10) & ((dadosAtivo.index.hour < 17) )]
+
+    # Define as funções de agregação para cada coluna
+    aggregations = {
+        'volume': 'sum',  # soma
+        'flags': 'sum',  # soma
+        'bid': 'mean',   # média
+        'ask': 'mean',   # média
+        'last': 'mean'   # média
+    }
+
+    # Agrupa por minuto e aplica as funções de agregação
+    dadosAtivo = dadosAtivo.resample('1T').agg(aggregations)
+
+    # Remove casas decimais ou diminui elas, onde é necessário
     dadosAtivo[['bid','ask','last']] = dadosAtivo[['bid','ask','last']].apply(lambda x : round(x,2))
-    dadosAtivo[['volume','flags','volume_real','time_msc']] =  dadosAtivo[['volume','flags','volume_real','time_msc']].astype('int64')
+    dadosAtivo[['volume','flags']] =  dadosAtivo[['volume','flags']].astype('int64')
+    dadosAtivo = dadosAtivo.loc[dadosAtivo['volume'] != 0]
 
     return dadosAtivo
 
