@@ -6,16 +6,27 @@ from sklearn.preprocessing import MinMaxScaler
 from keras.models import load_model
 
 def geraTrain(dataframe):
-    last_row = dataframe['last'].iloc[-1]
-    last_row_reshaped = np.reshape(last_row, (1, -1))
+    # Use todos os dados para o MinMaxScaler
+    data = dataframe['last'].tail(500).values.reshape(-1, 1)
     scaler = MinMaxScaler(feature_range=(0, 1))
-    last_row_normalized = scaler.fit_transform(last_row_reshaped)
-    x_train = last_row_normalized[:-1]
-    y_train = last_row_normalized[-1]
+    data_normalized = scaler.fit_transform(data)
+    
+    x_train = []
+    y_train = []
+
+    for i in range(60, len(data_normalized)):
+      x_train.append(data_normalized[i-60:i, 0])
+      y_train.append(data_normalized[i, 0])
+
+    #convertendo treinos para numpy
+    x_train, y_train = np.array(x_train), np.array(y_train)
+  
     x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], 1))
+
     return [x_train, y_train, scaler]
 
-def atualizaPrev(novoDataframe, xTreinoAntigo, YTreinoAntigo, epochs=10, batch_size=32):
+def atualizaPrev(novoDataframe, xTreinoAntigo, YTreinoAntigo, epochs=1, batch_size=32):
+
     [x_trainT1, y_trainT1, scalerT1] = geraTrain(novoDataframe)
     pretrained_model = load_model('modeloT1.keras')
     model = Sequential()
@@ -24,10 +35,9 @@ def atualizaPrev(novoDataframe, xTreinoAntigo, YTreinoAntigo, epochs=10, batch_s
     model.add(Dense(1))  
     weighting_factor = 0.1
     model.compile(loss='mean_squared_error', optimizer=Adam(lr=0.0001))
-    X_combined = np.vstack((xTreinoAntigo, x_trainT1))
-    y_combined = np.vstack((YTreinoAntigo, y_trainT1))
-    num_old_samples = len(xTreinoAntigo)
-    weights = np.ones((len(X_combined), 1))
+
+    num_old_samples = len(x_trainT1)
+    weights = np.ones((len(x_trainT1), 1))
     weights[:num_old_samples] *= weighting_factor
-    model.fit(X_combined, y_combined, sample_weight=weights, epochs=epochs, batch_size=batch_size, verbose='2')
-    return [X_combined, y_combined, scalerT1, model]
+    model.fit(x_trainT1, y_trainT1, sample_weight=weights, epochs=epochs, batch_size=batch_size, verbose='2')
+    return [x_trainT1, y_trainT1, scalerT1, model]
