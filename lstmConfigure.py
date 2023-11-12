@@ -60,4 +60,8 @@ def LSTMFunc(dataSet, dias):
 	#treinando modelo 15 15
 	modelT1.fit(x_trainT1, y_trainT1, batch_size=50, epochs=1);
 
-	return [modelT1,scalerT1]
+	# Salve o modelo inteiro (arquitetura + pesos)
+	modelT1.save('modeloT1.keras')
+
+
+	return [x_trainT1, y_trainT1, modelT1,scalerT1]

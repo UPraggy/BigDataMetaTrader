@@ -35,22 +35,21 @@ dataSet = geraDFAtivos('AAPL34',horasDif=10*24)
 #DATAFRAME COMPLETO
 dataSet = trataDF(dataSet)
 
-dias = list(dataSet.groupby(dataSet.index.day).groups.keys())
+dataSet['mes_dia'] = dataSet.index.strftime('%m-%d')
+
+# Para obter a lista de chaves em ordem
+dias = list(dataSet.groupby('mes_dia').groups.keys())
 
 #pegando dois dias antes
-[modelT1,scalerT1] = LSTMFunc(dataSet, dias[-3:-2][0])
+[x_trainT1, y_trainT1, modelT1,scalerT1] = LSTMFunc(dataSet, int(dias[-3:-2][0].split('-')[1]))
 
-
-
-NovaPrevT3 = getPrevisaoModel(dataSet, scalerT1, modelT1,dias)
-
-
+# NovaPrevT3 = getPrevisaoModel(dataSet, scalerT1, modelT1,dias)
 
 
 
 
-dataSetFinal = dataSet.loc[(dataSet.index.day == dias[-3:-2][0])].copy()
-dataSetFinal['Previsao'] = NovaPrevT3[:len(dataSetFinal)]
+dataSetFinal = dataSet.loc[(dataSet.index.day == int(dias[-3:-2][0].split('-')[1]))].copy()
+
 # @title Simulação Tempo Real
 #criando simulacao de um dataframe com os tempos futuros
 futureDataSet = dataSetFinal[1:].copy()
@@ -60,70 +59,43 @@ dataSetAtual = dataSetFinal.iloc[:1].copy()
 
 
 tempoFuturo = 1
-compraAtual = [0,0]
+compraAtual = 0
 
 compraTotal = []
 vendaTotal = []
 
 
-limiteTempoSemComprar = 0
+limiteTempoSemVender = 0
 
-fig, ax = plt.subplots(figsize=(12, 5))
-
-def update(dataSetAtual,compraTotal,vendaTotal):
-    ax.clear()
-    ax.scatter([i["x"] for i in compraTotal], [i["y"] for i in compraTotal], marker = 'o', c = 'r', label='compraTotal')
-    ax.scatter([i["x"] for i in vendaTotal], [i["y"] for i in vendaTotal], marker = 'o', c = 'g', label='vendaTotal')
-    ax.plot(dataSetAtual['Previsao'], alpha = 0.7, label='Previsao')
-    ax.legend()
-    plt.pause(0.001)
+from treinoNovo import atualizaPrev 
 
 
 while True:
-   if (tempoFuturo == len(futureDataSet)-2):
+  if (tempoFuturo == len(futureDataSet)-2):
       break
    # transpose convertendo para que dê para juntar no dataframe atual
-   tmp = futureDataSet.iloc[tempoFuturo].to_frame().transpose()
-
+  tmp = futureDataSet.iloc[tempoFuturo].to_frame().transpose()
+ 
    #adicionando linha do futuro
-   dataSetAtual = pd.concat([dataSetAtual,tmp])
-   indiceElAtual = (dataSetAtual.shape[0] - 1)
+  dataSetAtual = pd.concat([dataSetAtual,tmp])
+  indiceElAtual = (dataSetAtual.shape[0] - 1)
 
-   valorFuturo = futureDataSet.iloc[(indiceElAtual+1)]['Previsao']
-   valorAtual = futureDataSet.iloc[indiceElAtual]['Previsao']
+  valorFuturo = 0
+  valorAtual = 0
 
-  #AQUI COMPRA
-   if (valorFuturo <= (valorAtual*0.99998) and compraAtual[0] == 0):
-    compraTotal.append({"x": futureDataSet.iloc[(indiceElAtual+1)].name, "y": valorFuturo})
-    compraAtual[0] = valorFuturo
+  #por ser base offline a compra terá um delay, ou seja, compra um minuto depois
+  valorAtualReal = futureDataSet.iloc[(indiceElAtual+1)]['last']
 
-  #AQUI VENDE
-   if (compraAtual[0] > 0):
-    if((valorFuturo > compraAtual[0]*1.0001) or (limiteTempoSemComprar >= 10
-      and (valorFuturo == compraAtual[0]))):
-        limiteTempoSemComprar = 0
-        compraAtual = [0,0]
-        vendaTotal.append({"x": futureDataSet.iloc[(indiceElAtual+1)].name, "y": valorFuturo})
-    else:
-      limiteTempoSemComprar += 1
+  [x_trainT1,y_trainT1, scalerT1,modelT1] = atualizaPrev(
+    dataSet.loc[dataSet.index <=  dataSetAtual.index[-1]].copy(), x_trainT1, y_trainT1)
 
+  NovaPrevT3 = getPrevisaoModel(dataSet, scalerT1, modelT1,dias)
 
-   update(dataSetAtual,compraTotal,vendaTotal)
-   #time.sleep(0.001)
+  print("PREVISAO")
+  print(NovaPrevT3)
 
-   tempoFuturo += 1
+  tempoFuturo += 1
 
-compraSoma = sum([d['y'] for d in compraTotal])
-vendaSoma = sum([d['y'] for d in vendaTotal])
-print("COMPRA TOTAL")
-print(compraSoma)
-print("VENDA TOTAL")
-print(vendaSoma)
-
-print("LUCRO")
-print(vendaSoma-compraSoma+compraTotal[-1]['y'])
-
-plt.show()
 
 '''  
 import plotly.graph_objects as go
